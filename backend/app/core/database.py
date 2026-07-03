@@ -1,15 +1,25 @@
 """
 Configuracao do banco de dados.
 Suporta SQLite e PostgreSQL alternando via DATABASE_URL no .env.
-
-Exemplos:
-- SQLite:     sqlite:///./data/financas.db
-- PostgreSQL: postgresql+psycopg2://usuario:senha@host:5432/nomedobanco
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from loguru import logger
 from app.core.config import settings
+
+
+def _ajustar_url_railway(url: str) -> str:
+    """
+    Railway usa 'postgresql://' mas SQLAlchemy prefere 'postgresql+psycopg2://'.
+    Faz o ajuste automatico se necessario.
+    """
+    if url.startswith("postgres://"):
+        # Alguns provedores usam 'postgres://' - ajusta
+        url = "postgresql+psycopg2://" + url[len("postgres://"):]
+    elif url.startswith("postgresql://") and "psycopg2" not in url:
+        # Railway padrao - adiciona +psycopg2
+        url = "postgresql+psycopg2://" + url[len("postgresql://"):]
+    return url
 
 
 def _detectar_tipo_banco(url: str) -> str:
@@ -21,37 +31,33 @@ def _detectar_tipo_banco(url: str) -> str:
     return "desconhecido"
 
 
-tipo_banco = _detectar_tipo_banco(settings.database_url)
+# Ajusta URL se necessario
+database_url = _ajustar_url_railway(settings.database_url)
+tipo_banco = _detectar_tipo_banco(database_url)
 
-# Ajustes especificos por tipo de banco
+
 if tipo_banco == "sqlite":
-    # SQLite precisa desse parametro para funcionar bem com FastAPI
     engine = create_engine(
-        settings.database_url,
+        database_url,
         connect_args={"check_same_thread": False},
         echo=False,
     )
-    logger.info(f"🗄️ Banco SQLite: {settings.database_url}")
+    logger.info(f"🗄️ Banco SQLite: {database_url}")
 elif tipo_banco == "postgresql":
-    # PostgreSQL - configuracoes de pool
     engine = create_engine(
-        settings.database_url,
+        database_url,
         pool_size=10,
         max_overflow=20,
-        pool_pre_ping=True,   # Testa conexao antes de usar
-        pool_recycle=3600,    # Recicla conexoes antigas (1 hora)
+        pool_pre_ping=True,
+        pool_recycle=3600,
         echo=False,
     )
-    # Extrai só nome do host/db para nao expor senha nos logs
-    partes = settings.database_url.split("@")
-    if len(partes) > 1:
-        info = partes[1]
-    else:
-        info = "url_sem_senha"
+    partes = database_url.split("@")
+    info = partes[1] if len(partes) > 1 else "url_sem_senha"
     logger.info(f"🐘 Banco PostgreSQL: {info}")
 else:
-    logger.warning(f"⚠️ Tipo de banco desconhecido: {settings.database_url}")
-    engine = create_engine(settings.database_url, echo=False)
+    logger.warning(f"⚠️ Tipo de banco desconhecido: {database_url}")
+    engine = create_engine(database_url, echo=False)
 
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
