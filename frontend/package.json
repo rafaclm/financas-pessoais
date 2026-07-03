@@ -1,0 +1,31 @@
+{
+  "name": "financas-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.1.0",
+    "@primevue/themes": "^4.2.1",
+    "axios": "^1.7.7",
+    "chart.js": "^4.4.6",
+    "lucide-vue-next": "^0.460.0",
+    "pinia": "^2.2.6",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.2.1",
+    "vue": "^3.5.12",
+    "vue-chartjs": "^5.3.2",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vue-tsc": "^2.1.10"
+  }
+}

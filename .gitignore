@@ -1,0 +1,92 @@
+# =========================================
+# GITIGNORE - Sistema Financas Pessoais
+# =========================================
+
+# ===== Arquivos sensiveis =====
+*.env
+.env
+.env.local
+.env.*.local
+
+# Mantem apenas os exemplos
+!.env.example
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Virtual envs =====
+.venv/
+venv/
+ENV/
+env/
+
+# ===== Banco de dados local (SQLite) =====
+*.db
+*.sqlite
+*.sqlite3
+backend/data/*.db
+backend/data/*.sqlite
+backend/data/backups/
+
+# ===== Uploads e temp =====
+uploads/
+tmp/
+temp/
+
+# ===== Node.js / Frontend =====
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.log
+
+# ===== IDE / Editor =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Cache =====
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Coverage =====
+.coverage
+htmlcov/
+.tox/
+
+# ===== Sistema =====
+*.pid
+*.seed
+*.pid.lock
+
+# ===== Scripts pessoais =====
+migrar_sqlite_para_postgres.py

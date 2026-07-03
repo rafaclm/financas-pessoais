@@ -1,0 +1,13 @@
+<script setup lang="ts">
+import { RouterView } from 'vue-router'
+import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useTemaStore } from './stores/tema'
+useTemaStore() // inicializa tema
+</script>
+
+<template>
+  <RouterView />
+  <Toast position="top-right" />
+  <ConfirmDialog />
+</template>

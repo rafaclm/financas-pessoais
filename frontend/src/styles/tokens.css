@@ -1,0 +1,163 @@
+:root {
+  /* ========================================
+     TIPOGRAFIA
+     ======================================== */
+  --font-ui: "Geist", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-base: var(--font-ui);
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+  --text-4xl: 40px;
+  --text-5xl: 48px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Marca Lumina */
+  --brand-primary: #A78BFA;
+  --brand-primary-hover: #9333EA;
+  --brand-secondary: #B0C6FF;
+  --brand-accent: #DDB7FF;
+
+  /* Cores por classe de ativo */
+  --classe-cash: #06B6D4;
+  --classe-rf: #3B82F6;
+  --classe-rv-br: #A78BFA;
+  --classe-rv-eua: #EC4899;
+  --classe-cripto: #F97316;
+  --classe-etf: #22D3EE;
+  --classe-fii: #8B5CF6;
+  --classe-fiagro: #EAB308;
+  --classe-reit: #F472B6;
+
+  /* 🆕 Cores por instituição (identidade visual) */
+  --inst-itau: #FF6B00;         /* Laranja Itaú */
+  --inst-bradesco: #E30613;      /* Vermelho Bradesco */
+  --inst-nomad: #10B981;         /* Verde Nomad */
+  --inst-avenue: #A78BFA;        /* Roxo Avenue */
+  --inst-mercadolivre: #FFE600;  /* Amarelo ML */
+  --inst-caixa: #005CA9;         /* Azul Caixa */
+  --inst-default: #94A3B8;       /* Cinza fallback */
+
+  /* Gradientes */
+  --gradient-primary: linear-gradient(135deg, #A78BFA 0%, #DDB7FF 100%);
+  --gradient-secondary: linear-gradient(135deg, #B0C6FF 0%, #A78BFA 100%);
+  --gradient-hero: linear-gradient(135deg, #4C1D95 0%, #7C3AED 50%, #A78BFA 100%);
+}
+
+/* ========================================
+   🌙 TEMA ESCURO
+   ======================================== */
+html.theme-dark {
+  --bg-base: #0B0E14;
+  --bg-surface: #10131B;
+  --bg-elevated: #171B26;
+  --bg-hover: #1F2436;
+  --bg-glass: rgba(23, 27, 38, 0.6);
+  --bg-glass-strong: rgba(23, 27, 38, 0.85);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-disabled: #64748B;
+  --text-inverse: #0B0E14;
+  --text-numeric: #B0C6FF;
+
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --danger: #F43F5E;
+  --danger-bg: rgba(244, 63, 94, 0.15);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.15);
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glow-primary: 0 0 40px rgba(167, 139, 250, 0.25);
+  --shadow-glow-success: 0 0 30px rgba(16, 185, 129, 0.2);
+}
+
+/* ========================================
+   ☀️ TEMA CLARO
+   ======================================== */
+html.theme-light {
+  --bg-base: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-hover: #E2E8F0;
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass-strong: rgba(255, 255, 255, 0.95);
+
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.2);
+
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-disabled: #94A3B8;
+  --text-inverse: #FFFFFF;
+  --text-numeric: #4C1D95;
+
+  --brand-primary: #7C3AED;
+  --brand-primary-hover: #6D28D9;
+
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.1);
+  --danger: #DC2626;
+  --danger-bg: rgba(220, 38, 38, 0.1);
+  --warning: #D97706;
+  --warning-bg: rgba(217, 119, 6, 0.1);
+  --info: #2563EB;
+  --info-bg: rgba(37, 99, 235, 0.1);
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+  --shadow-glow-primary: 0 0 40px rgba(124, 58, 237, 0.2);
+  --shadow-glow-success: 0 0 30px rgba(5, 150, 105, 0.15);
+}
+
+/* Utilitarios */
+.tabular, .numero, .mono {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.numero-destaque {
+  font-family: var(--font-mono) !important;
+  color: var(--text-numeric);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.value-positive { color: var(--success) !important; }
+.value-negative { color: var(--danger) !important; }
+.value-muted { color: var(--text-muted); }
+.value-warning { color: var(--warning); }
