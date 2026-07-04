@@ -7,11 +7,16 @@ class SaldoInvestimentoBase(ORMBase):
     mes: int = Field(ge=1, le=12)
     produto_id: int
     saldo: float = Field(ge=0)
-    cotacao_usd_brl: float | None = Field(default=None, gt=0)
+    cotacao_usd_brl: float | None = None
+    saldo_brl: float = Field(default=0, ge=0)
 
 
-class SaldoInvestimentoCreate(SaldoInvestimentoBase):
-    pass
+class SaldoInvestimentoCreate(ORMBase):
+    ano_id: int
+    mes: int = Field(ge=1, le=12)
+    produto_id: int
+    saldo: float = Field(ge=0)
+    cotacao_usd_brl: float | None = None
 
 
 class SaldoInvestimentoUpdate(ORMBase):
@@ -21,4 +26,15 @@ class SaldoInvestimentoUpdate(ORMBase):
 
 class SaldoInvestimentoOut(SaldoInvestimentoBase, TimestampSchema):
     id: int
-    saldo_brl: float
+
+
+class ItemSaldoInvestimentoLote(ORMBase):
+    ano_id: int
+    mes: int = Field(ge=1, le=12)
+    produto_id: int
+    saldo: float = Field(ge=0)
+    cotacao_usd_brl: float | None = None
+
+
+class SaldoInvestimentoLote(ORMBase):
+    itens: list[ItemSaldoInvestimentoLote]
