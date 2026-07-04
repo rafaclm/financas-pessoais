@@ -4,7 +4,7 @@ from app.api.deps import DbSession
 from app.infrastructure.db.models import (
     SaldoInvestimento, ProdutoInvestimento, Ano
 )
-from app.schemas.saldos_inv import (
+from app.schemas.saldos_investimentos import (
     SaldoInvestimentoCreate, SaldoInvestimentoUpdate,
     SaldoInvestimentoOut, SaldoInvestimentoLote
 )
