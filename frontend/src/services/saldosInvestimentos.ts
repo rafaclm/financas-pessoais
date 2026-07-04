@@ -12,20 +12,49 @@ export interface SaldoInvestimento {
   atualizado_em: string
 }
 
-export const saldosInvService = {
-  listar: (ano_id?: number, mes?: number) =>
-    http.get<SaldoInvestimento[]>("/posicoes/saldos-investimentos",
+export interface SaldoInvestimentoComVariacao {
+  produto_id: number
+  produto_nome: string
+  produto_categoria: string
+  produto_moeda: string
+  saldo_id: number | null
+  saldo: number
+  cotacao_usd_brl: number | null
+  saldo_brl: number
+  saldo_brl_mes_anterior: number
+  variacao_valor: number | null
+  variacao_pct: number | null
+  existe: boolean
+}
+
+export interface SaldoInvestimentoLote {
+  itens: Array<{
+    ano_id: number
+    mes: number
+    produto_id: number
+    saldo: number
+    cotacao_usd_brl: number | null
+  }>
+}
+
+export const saldosInvestimentosService = {
+  listar: (ano_id: number, mes: number) =>
+    http.get<SaldoInvestimento[]>("/saldos-investimentos",
       { params: { ano_id, mes } }).then(r => r.data),
-  criar: (p: Partial<SaldoInvestimento>) =>
-    http.post<SaldoInvestimento>("/posicoes/saldos-investimentos", p).then(r => r.data),
-  lote: (lista: Partial<SaldoInvestimento>[]) =>
-    http.post<SaldoInvestimento[]>("/posicoes/saldos-investimentos/lote", lista).then(r => r.data),
-  atualizar: (id: number, p: Partial<SaldoInvestimento>) =>
-    http.put<SaldoInvestimento>(`/posicoes/saldos-investimentos/${id}`, p).then(r => r.data),
-  excluir: (id: number) => http.delete(`/posicoes/saldos-investimentos/${id}`),
-  replicarMesAnterior: (ano_id: number, mes: number, force = false) =>
-    http.post<{ replicados: number; origem_total: number; mensagem: string }>(
-      "/posicoes/saldos-investimentos/replicar-mes-anterior",
-      { ano_id, mes, force }
+
+  listarComVariacao: (ano_id: number, mes: number) =>
+    http.get<SaldoInvestimentoComVariacao[]>("/saldos-investimentos/com-variacao",
+      { params: { ano_id, mes } }).then(r => r.data),
+
+  lote: (payload: SaldoInvestimentoLote) =>
+    http.post<SaldoInvestimento[]>("/saldos-investimentos/lote", payload).then(r => r.data),
+
+  excluir: (id: number) => http.delete(`/saldos-investimentos/${id}`),
+
+  replicarMesAnterior: (ano_id: number, mes: number) =>
+    http.post<{ mensagem: string; replicados: number }>(
+      "/saldos-investimentos/replicar-mes-anterior",
+      null,
+      { params: { ano_id, mes } }
     ).then(r => r.data),
 }
