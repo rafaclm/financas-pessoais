@@ -8,7 +8,7 @@ import {
   CreditCard, PiggyBank, BarChart3, HeartHandshake, HeartCrack, Fuel, Receipt,
   ShoppingCart, Gem, Coins, LineChart, Sparkles, Bitcoin, Flag, Globe, Layers,
   Target, Settings, Activity, Database, Upload, LogOut, Menu as MenuIcon,
-  ChevronDown, ChevronRight, PanelLeftClose, PanelLeft,
+  ChevronDown, ChevronRight, PanelLeftClose, PanelLeft, X,
 } from "lucide-vue-next"
 import SeletorPeriodo from "@/components/SeletorPeriodo.vue"
 
@@ -17,28 +17,25 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-// ===========================================
-// ESTADO DO MENU (persistido no localStorage)
-// ===========================================
-
-// Menu inteiro colapsado ou expandido?
-const menuColapsado = ref(false)
-
-// Quais grupos estão abertos?
-const gruposAbertos = ref<Record<string, boolean>>({
-  patrimonio: true,
-  balanceamento: true,
-  posicoes: true,
-  lancamentos: true,
-  cadastros: true,
-  configuracoes: true,
+// Detecta se e mobile
+const ehMobile = ref(window.innerWidth <= 768)
+window.addEventListener("resize", () => {
+  ehMobile.value = window.innerWidth <= 768
 })
 
-// Restaura preferências ao iniciar
+// Menu colapsado (desktop) / aberto (mobile)
+const menuColapsado = ref(false)
+// No mobile, controla se o menu-overlay esta aberto
+const menuMobileAberto = ref(false)
+
+const gruposAbertos = ref<Record<string, boolean>>({
+  patrimonio: true, balanceamento: true, posicoes: true,
+  lancamentos: true, cadastros: true, configuracoes: true,
+})
+
 onMounted(() => {
   const menuState = localStorage.getItem("menu_colapsado")
   if (menuState === "true") menuColapsado.value = true
-
   const gruposState = localStorage.getItem("menu_grupos")
   if (gruposState) {
     try {
@@ -47,21 +44,24 @@ onMounted(() => {
   }
 })
 
-// Persiste mudanças
-watch(menuColapsado, (v) => {
-  localStorage.setItem("menu_colapsado", String(v))
+watch(menuColapsado, (v) => localStorage.setItem("menu_colapsado", String(v)))
+watch(gruposAbertos, (v) => localStorage.setItem("menu_grupos", JSON.stringify(v)), { deep: true })
+
+// Fecha menu mobile ao trocar de rota
+watch(() => route.path, () => {
+  if (ehMobile.value) menuMobileAberto.value = false
 })
 
-watch(gruposAbertos, (v) => {
-  localStorage.setItem("menu_grupos", JSON.stringify(v))
-}, { deep: true })
-
-// ===========================================
-// AÇÕES
-// ===========================================
-
 function toggleMenu() {
-  menuColapsado.value = !menuColapsado.value
+  if (ehMobile.value) {
+    menuMobileAberto.value = !menuMobileAberto.value
+  } else {
+    menuColapsado.value = !menuColapsado.value
+  }
+}
+
+function fecharMenuMobile() {
+  menuMobileAberto.value = false
 }
 
 function toggleGrupo(grupo: string) {
@@ -76,16 +76,10 @@ function sair() {
 
 function irPerfil() {
   router.push("/perfil")
+  if (ehMobile.value) menuMobileAberto.value = false
 }
 
-// ===========================================
-// AUTO-EXPANSÃO INTELIGENTE
-// ===========================================
-
-// Se estiver dentro de um grupo, garante que ele está aberto
 watch(() => route.path, (path) => {
-  if (menuColapsado.value) return // se menu colapsado, não faz nada
-
   const mapeamento: Record<string, string> = {
     "/posicoes/consolidacao-patrimonial": "patrimonio",
     "/posicoes/posicao-atual": "patrimonio",
@@ -114,42 +108,26 @@ watch(() => route.path, (path) => {
     "/configuracoes/backup": "configuracoes",
     "/configuracoes/importacao": "configuracoes",
   }
-
   const grupo = mapeamento[path]
-  if (grupo) {
-    gruposAbertos.value[grupo] = true
-  }
+  if (grupo) gruposAbertos.value[grupo] = true
 }, { immediate: true })
-
-// ===========================================
-// GRUPOS DE NAVEGAÇÃO
-// ===========================================
 
 const grupos = computed(() => [
   {
-    id: "patrimonio",
-    label: "Patrimônio",
-    icone: Sparkles,
-    itens: [
+    id: "patrimonio", label: "Patrimônio", itens: [
       { to: "/posicoes/consolidacao-patrimonial", label: "Patrimônio Total", icone: Sparkles },
       { to: "/posicoes/posicao-atual", label: "Posição Atual", icone: Activity },
       { to: "/posicoes/consolidacao-rv", label: "Renda Variável", icone: Layers },
     ],
   },
   {
-    id: "balanceamento",
-    label: "Balanceamento",
-    icone: Target,
-    itens: [
+    id: "balanceamento", label: "Balanceamento", itens: [
       { to: "/balanceamento/analise", label: "Análise (Rebalancear)", icone: Target },
       { to: "/balanceamento/config", label: "Config. Metas", icone: Settings },
     ],
   },
   {
-    id: "posicoes",
-    label: "Posições mensais",
-    icone: BarChart3,
-    itens: [
+    id: "posicoes", label: "Posições mensais", itens: [
       { to: "/posicoes/saldos-contas", label: "Saldos Contas", icone: Coins },
       { to: "/posicoes/saldos-investimentos", label: "Saldos Inv.", icone: LineChart },
       { to: "/posicoes/cripto", label: "Criptoativos", icone: Bitcoin },
@@ -158,10 +136,7 @@ const grupos = computed(() => [
     ],
   },
   {
-    id: "lancamentos",
-    label: "Lançamentos",
-    icone: Receipt,
-    itens: [
+    id: "lancamentos", label: "Lançamentos", itens: [
       { to: "/lancamentos/receitas", label: "Receitas", icone: HeartHandshake },
       { to: "/lancamentos/despesas", label: "Despesas", icone: HeartCrack },
       { to: "/lancamentos/combustivel", label: "Combustível", icone: Fuel },
@@ -171,10 +146,7 @@ const grupos = computed(() => [
     ],
   },
   {
-    id: "cadastros",
-    label: "Cadastros",
-    icone: Building2,
-    itens: [
+    id: "cadastros", label: "Cadastros", itens: [
       { to: "/cadastros/anos", label: "Anos", icone: Calendar },
       { to: "/cadastros/categorias-despesas", label: "Cat. Despesas", icone: TrendingDown },
       { to: "/cadastros/categorias-receitas", label: "Cat. Receitas", icone: TrendingUp },
@@ -186,99 +158,79 @@ const grupos = computed(() => [
     ],
   },
   {
-    id: "configuracoes",
-    label: "Configurações",
-    icone: Settings,
-    itens: [
+    id: "configuracoes", label: "Configurações", itens: [
       { to: "/configuracoes/backup", label: "Backup e Restore", icone: Database },
       { to: "/configuracoes/importacao", label: "Importar Planilha", icone: Upload },
     ],
   },
 ])
+
+// Estado visual: menu visivel?
+const menuVisivel = computed(() => {
+  if (ehMobile.value) return menuMobileAberto.value
+  return !menuColapsado.value
+})
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'menu-colapsado': menuColapsado }">
-    <aside class="sidebar">
-      <!-- HEADER: Logo + Botão de ocultar -->
+  <div class="app-shell"
+       :class="{ 'menu-colapsado': !ehMobile && menuColapsado, 'mobile': ehMobile }">
+
+    <!-- Overlay escuro (mobile) -->
+    <div v-if="ehMobile && menuMobileAberto" class="overlay-mobile" @click="fecharMenuMobile"></div>
+
+    <aside class="sidebar" :class="{ 'sidebar-aberta': menuVisivel }">
       <div class="sidebar-header">
         <div class="brand">
-          <div class="brand-icon">
-            <Sparkles :size="20" />
-          </div>
-          <span v-if="!menuColapsado" class="brand-nome">Finanças</span>
+          <div class="brand-icon"><Sparkles :size="20" /></div>
+          <span v-if="!menuColapsado || ehMobile" class="brand-nome">Finanças</span>
         </div>
-        <button
-          class="btn-toggle-menu"
-          @click="toggleMenu"
-          :title="menuColapsado ? 'Expandir menu' : 'Recolher menu'"
-        >
-          <PanelLeft v-if="menuColapsado" :size="16" />
+        <!-- Botao fechar (dentro do menu) -->
+        <button class="btn-toggle-menu" @click="toggleMenu"
+                :title="ehMobile ? 'Fechar menu' : 'Recolher menu'">
+          <X v-if="ehMobile" :size="18" />
+          <PanelLeft v-else-if="menuColapsado" :size="16" />
           <PanelLeftClose v-else :size="16" />
         </button>
       </div>
 
       <nav class="menu-scroll">
-        <!-- Início (sempre visível, sem grupo) -->
-        <RouterLink to="/" class="nav-item" :title="menuColapsado ? 'Início' : ''">
+        <RouterLink to="/" class="nav-item" :title="menuColapsado && !ehMobile ? 'Início' : ''">
           <Home :size="18" />
-          <span v-if="!menuColapsado">Início</span>
+          <span v-if="!menuColapsado || ehMobile">Início</span>
         </RouterLink>
 
-        <!-- Grupos colapsáveis -->
         <div v-for="grupo in grupos" :key="grupo.id" class="grupo">
-          <!-- Título do grupo (clicável) -->
-          <button
-            v-if="!menuColapsado"
-            class="grupo-header"
-            @click="toggleGrupo(grupo.id)"
-          >
+          <button v-if="!menuColapsado || ehMobile" class="grupo-header" @click="toggleGrupo(grupo.id)">
             <MenuIcon :size="14" class="grupo-icone-menu" />
             <span class="grupo-label">{{ grupo.label }}</span>
             <ChevronDown v-if="gruposAbertos[grupo.id]" :size="14" class="grupo-chevron" />
             <ChevronRight v-else :size="14" class="grupo-chevron" />
           </button>
 
-          <!-- Itens do grupo -->
           <transition name="collapse">
-            <div v-if="menuColapsado || gruposAbertos[grupo.id]" class="grupo-itens">
-              <RouterLink
-                v-for="item in grupo.itens"
-                :key="item.to"
-                :to="item.to"
-                class="nav-item"
-                :title="menuColapsado ? item.label : ''"
-              >
+            <div v-if="(menuColapsado && !ehMobile) || gruposAbertos[grupo.id]" class="grupo-itens">
+              <RouterLink v-for="item in grupo.itens" :key="item.to" :to="item.to"
+                          class="nav-item" :title="menuColapsado && !ehMobile ? item.label : ''">
                 <component :is="item.icone" :size="18" />
-                <span v-if="!menuColapsado">{{ item.label }}</span>
+                <span v-if="!menuColapsado || ehMobile">{{ item.label }}</span>
               </RouterLink>
             </div>
           </transition>
 
-          <!-- Separador visual entre grupos quando colapsado -->
-          <div v-if="menuColapsado" class="separador-colapsado"></div>
+          <div v-if="menuColapsado && !ehMobile" class="separador-colapsado"></div>
         </div>
       </nav>
 
-      <!-- USUARIO FOOTER -->
       <div class="usuario-footer">
-        <button
-          class="usuario-info"
-          @click="irPerfil"
-          :title="menuColapsado ? `${auth.nome} - Ver perfil` : 'Ver perfil'"
-        >
+        <button class="usuario-info" @click="irPerfil">
           <div class="usuario-avatar">{{ auth.iniciais }}</div>
-          <div v-if="!menuColapsado" class="usuario-dados">
+          <div v-if="!menuColapsado || ehMobile" class="usuario-dados">
             <span class="usuario-nome">{{ auth.nome }}</span>
             <span class="usuario-email">{{ auth.email }}</span>
           </div>
         </button>
-        <button
-          v-if="!menuColapsado"
-          class="btn-sair"
-          @click="sair"
-          title="Sair do sistema"
-        >
+        <button v-if="!menuColapsado || ehMobile" class="btn-sair" @click="sair" title="Sair">
           <LogOut :size="16" />
         </button>
       </div>
@@ -286,21 +238,19 @@ const grupos = computed(() => [
 
     <div class="main">
       <header class="topbar">
-        <SeletorPeriodo />
+        <div class="topbar-left">
+          <!-- 🍔 Botao hamburguer SEMPRE visivel no mobile -->
+          <button v-if="ehMobile" class="btn-hamburguer" @click="toggleMenu" title="Menu">
+            <MenuIcon :size="22" />
+          </button>
+          <SeletorPeriodo />
+        </div>
         <div class="topbar-actions">
-          <button
-            v-if="menuColapsado"
-            class="theme-toggle"
-            @click="sair"
-            title="Sair"
-          >
+          <button v-if="ehMobile" class="theme-toggle" @click="sair" title="Sair">
             <LogOut :size="18" />
           </button>
-          <button
-            class="theme-toggle"
-            @click="tema.toggle()"
-            :title="tema.tema === 'dark' ? 'Modo claro' : 'Modo escuro'"
-          >
+          <button class="theme-toggle" @click="tema.toggle()"
+                  :title="tema.tema === 'dark' ? 'Modo claro' : 'Modo escuro'">
             <Sun v-if="tema.tema === 'dark'" :size="18" />
             <Moon v-else :size="18" />
           </button>
@@ -312,439 +262,169 @@ const grupos = computed(() => [
 </template>
 
 <style scoped>
-/* ===========================================
-   LAYOUT PRINCIPAL
-   =========================================== */
 .app-shell {
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100vh;
   transition: grid-template-columns 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+.app-shell.menu-colapsado { grid-template-columns: 68px 1fr; }
 
-.app-shell.menu-colapsado {
-  grid-template-columns: 68px 1fr;
-}
+/* No mobile, so 1 coluna (menu vira overlay) */
+.app-shell.mobile { grid-template-columns: 1fr; }
 
-/* ===========================================
-   SIDEBAR
-   =========================================== */
 .sidebar {
   background: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
   padding: var(--space-3) var(--space-2);
+  padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
 }
 
-.menu-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px;
+/* Sidebar como overlay no mobile */
+.app-shell.mobile .sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  width: 270px;
+  z-index: 100;
+  transform: translateX(-100%);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+}
+.app-shell.mobile .sidebar.sidebar-aberta {
+  transform: translateX(0);
 }
 
-.menu-scroll::-webkit-scrollbar {
-  width: 4px;
+.overlay-mobile {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
-.menu-scroll::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 2px;
-}
+.menu-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 4px; }
+.menu-scroll::-webkit-scrollbar { width: 4px; }
+.menu-scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
 
-/* ===========================================
-   HEADER DA SIDEBAR (Logo + Botão toggle)
-   =========================================== */
 .sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2) var(--space-2);
-  margin-bottom: var(--space-4);
-  min-height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-2); margin-bottom: var(--space-4); min-height: 48px;
 }
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  overflow: hidden;
-}
-
+.brand { display: flex; align-items: center; gap: var(--space-3); overflow: hidden; }
 .brand-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
-  color: white;
-  box-shadow: var(--shadow-glow-primary);
-  flex-shrink: 0;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  background: var(--gradient-primary); border-radius: var(--radius-md);
+  color: white; box-shadow: var(--shadow-glow-primary); flex-shrink: 0;
 }
-
-.brand-nome {
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
+.brand-nome { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
 
 .btn-toggle-menu {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 200ms ease;
-  flex-shrink: 0;
+  background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+  color: var(--text-muted); cursor: pointer; padding: 6px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 200ms ease; flex-shrink: 0;
 }
+.btn-toggle-menu:hover { background: var(--bg-hover); color: var(--brand-primary); }
 
-.btn-toggle-menu:hover {
-  background: var(--bg-hover);
-  color: var(--brand-primary);
-  border-color: var(--brand-primary);
-}
+.menu-colapsado .sidebar-header { flex-direction: column; gap: var(--space-2); padding: var(--space-1); }
+.menu-colapsado .brand { justify-content: center; }
 
-.menu-colapsado .sidebar-header {
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-1);
-}
-
-.menu-colapsado .brand {
-  justify-content: center;
-}
-
-/* ===========================================
-   GRUPOS COLAPSAVEIS
-   =========================================== */
-.grupo {
-  margin-bottom: var(--space-2);
-}
-
+.grupo { margin-bottom: var(--space-2); }
 .grupo-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  padding: var(--space-2) var(--space-3);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 180ms ease;
-  border-radius: var(--radius-sm);
-  text-align: left;
+  display: flex; align-items: center; gap: var(--space-2); width: 100%;
+  background: transparent; border: none; color: var(--text-muted);
+  padding: var(--space-2) var(--space-3); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.12em; font-weight: 700; cursor: pointer;
+  transition: all 180ms ease; border-radius: var(--radius-sm); text-align: left;
 }
+.grupo-header:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.grupo-icone-menu { opacity: 0.5; flex-shrink: 0; }
+.grupo-label { flex: 1; }
+.grupo-chevron { opacity: 0.7; }
+.grupo-itens { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; padding-left: var(--space-1); }
 
-.grupo-header:hover {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-}
-
-.grupo-icone-menu {
-  opacity: 0.5;
-  flex-shrink: 0;
-}
-
-.grupo-label {
-  flex: 1;
-}
-
-.grupo-chevron {
-  transition: transform 200ms ease;
-  opacity: 0.7;
-}
-
-.grupo-itens {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: 4px;
-  padding-left: var(--space-1);
-}
-
-/* ===========================================
-   ITENS DE NAVEGACAO
-   =========================================== */
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  transition: all 180ms ease;
-  white-space: nowrap;
-  overflow: hidden;
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3);
+  border-radius: var(--radius-md); text-decoration: none; color: var(--text-secondary);
+  font-size: var(--text-sm); font-weight: 500; transition: all 180ms ease;
+  white-space: nowrap; overflow: hidden;
 }
-
-.nav-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
+.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .nav-item.router-link-exact-active {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-glow-primary);
-  font-weight: 600;
+  background: var(--gradient-primary); color: white;
+  box-shadow: var(--shadow-glow-primary); font-weight: 600;
 }
+.menu-colapsado .nav-item { justify-content: center; padding: var(--space-3) var(--space-2); }
+.menu-colapsado .grupo-itens { padding-left: 0; padding-top: 0; }
+.separador-colapsado { height: 1px; background: var(--border-subtle); margin: var(--space-2) var(--space-3); }
 
-/* Modo colapsado: itens centralizados */
-.menu-colapsado .nav-item {
-  justify-content: center;
-  padding: var(--space-3) var(--space-2);
-}
+.collapse-enter-active, .collapse-leave-active { transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; }
+.collapse-enter-from, .collapse-leave-to { opacity: 0; max-height: 0; }
+.collapse-enter-to, .collapse-leave-from { opacity: 1; max-height: 500px; }
 
-.menu-colapsado .grupo-itens {
-  padding-left: 0;
-  padding-top: 0;
-}
-
-/* Separador quando colapsado */
-.separador-colapsado {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: var(--space-2) var(--space-3);
-}
-
-/* ===========================================
-   ANIMACAO DE COLAPSAR
-   =========================================== */
-.collapse-enter-active,
-.collapse-leave-active {
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-
-.collapse-enter-from,
-.collapse-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
-
-.collapse-enter-to,
-.collapse-leave-from {
-  opacity: 1;
-  max-height: 500px;
-}
-
-/* ===========================================
-   USUARIO FOOTER
-   =========================================== */
 .usuario-footer {
-  padding: var(--space-2);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  margin-top: var(--space-3);
+  padding: var(--space-2); border-top: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: var(--space-2);
+  background: var(--bg-elevated); border-radius: var(--radius-md); margin-top: var(--space-3);
+  padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
 }
-
 .usuario-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-md);
-  text-align: left;
-  color: inherit;
-  transition: background 180ms ease;
+  display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 0;
+  background: transparent; border: none; cursor: pointer; padding: 8px;
+  border-radius: var(--radius-md); text-align: left; color: inherit; transition: background 180ms ease;
 }
-
-.usuario-info:hover {
-  background: var(--bg-surface);
-}
-
+.usuario-info:hover { background: var(--bg-surface); }
 .usuario-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: var(--text-xs);
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: var(--radius-full);
+  background: var(--gradient-primary); display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: var(--text-xs); flex-shrink: 0;
 }
-
-.usuario-dados {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.usuario-nome {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.usuario-email {
-  font-size: 10px;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+.usuario-dados { display: flex; flex-direction: column; min-width: 0; }
+.usuario-nome { font-size: var(--text-xs); font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usuario-email { font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btn-sair {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 200ms ease;
-  flex-shrink: 0;
+  background: transparent; border: none; color: var(--text-muted); cursor: pointer;
+  padding: 8px; border-radius: var(--radius-md); display: flex; align-items: center;
+  justify-content: center; transition: all 200ms ease; flex-shrink: 0;
 }
+.btn-sair:hover { background: var(--danger-bg); color: var(--danger); }
+.menu-colapsado .usuario-footer { justify-content: center; padding: var(--space-1); }
+.menu-colapsado .usuario-info { justify-content: center; padding: 4px; }
 
-.btn-sair:hover {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
+.main { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-base); }
 
-.menu-colapsado .usuario-footer {
-  justify-content: center;
-  padding: var(--space-1);
-}
-
-.menu-colapsado .usuario-info {
-  justify-content: center;
-  padding: 4px;
-}
-
-/* ===========================================
-   MAIN AREA
-   =========================================== */
-.main {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg-base);
-}
-
+/* 🍎 TOPBAR com safe area */
 .topbar {
-  height: 68px;
   padding: 0 var(--space-6);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.theme-toggle {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  border-radius: var(--radius-md);
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.theme-toggle:hover {
-  background: var(--bg-hover);
-  color: var(--brand-primary);
-  border-color: var(--brand-primary);
-}
-
-.content {
-  padding: var(--space-6);
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* ===========================================
-   RESPONSIVO MOBILE
-   =========================================== */
-@media (max-width: 768px) {
-  .app-shell {
-    grid-template-columns: 68px 1fr;
-  }
-
-  .app-shell:not(.menu-colapsado) {
-    grid-template-columns: 240px 1fr;
-  }
-}
-
-/* 🍎 iOS Safe Area - respeita notch/relogio */
-.topbar {
   padding-top: env(safe-area-inset-top, 0px);
   height: calc(68px + env(safe-area-inset-top, 0px));
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
 }
+.topbar-left { display: flex; align-items: center; gap: var(--space-3); }
 
-.sidebar {
-  padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
+.btn-hamburguer {
+  background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+  color: var(--text-primary); border-radius: var(--radius-md); padding: 8px;
+  display: flex; align-items: center; cursor: pointer; transition: all 200ms ease;
 }
+.btn-hamburguer:hover { background: var(--brand-primary); color: white; }
 
-/* Menu como overlay no mobile */
-@media (max-width: 768px) {
-  .app-shell {
-    grid-template-columns: 1fr !important;
-  }
+.topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
+.theme-toggle {
+  background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+  color: var(--text-secondary); border-radius: var(--radius-md); padding: 10px;
+  display: flex; align-items: center; cursor: pointer; transition: all 200ms ease;
+}
+.theme-toggle:hover { background: var(--bg-hover); color: var(--brand-primary); }
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 260px;
-    z-index: 100;
-    transform: translateX(-100%);
-    transition: transform 250ms ease;
-    box-shadow: var(--shadow-lg);
-  }
-
-  .app-shell:not(.menu-colapsado) .sidebar {
-    transform: translateX(0);
-  }
-
-  .content {
-    padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
-  }
+.content {
+  padding: var(--space-6); overflow-y: auto; flex: 1;
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 }
 </style>
