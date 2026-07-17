@@ -13,6 +13,19 @@ import App from "./App.vue"
 import router from "./router"
 import { useAuthStore } from "./stores/auth"
 
+// 🆕 Registro do Service Worker (PWA)
+import { registerSW } from "virtual:pwa-register"
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    // Quando houver nova versao, atualiza automaticamente
+    updateSW(true)
+  },
+  onOfflineReady() {
+    console.log("✅ App pronto para funcionar offline")
+  },
+})
+
 const app = createApp(App)
 const pinia = createPinia()
 
