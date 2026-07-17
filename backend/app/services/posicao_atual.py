@@ -19,23 +19,42 @@ def _preco_medio_efetivo(pos: PosicaoAtualAtivo) -> float:
 
 
 def calcular_custo_total_brl(db: Session, ativo_id: int) -> float:
-    """Soma total investido em BRL (compras) considerando cotação USD do momento."""
-    rows = db.execute(
-        select(
-            AporteBolsa.quantidade,
-            AporteBolsa.preco_unitario,
-            AporteBolsa.taxas,
-            AporteBolsa.moeda,
-            AporteBolsa.cotacao_usd_brl,
-            AporteBolsa.valor_total_brl,
-        )
-        .where(
-            AporteBolsa.ativo_id == ativo_id,
-            AporteBolsa.tipo_operacao == "compra",
-        )
-    ).all()
-    # Já temos valor_total_brl calculado no aporte (inclui taxas e câmbio)
-    return round(sum(float(r.valor_total_brl) for r in rows), 4)
+    """
+    Custo da POSICAO ATUAL em BRL.
+
+    IMPORTANTE: usa custo proporcional a quantidade ATUAL (ja descontando
+    vendas), nao a soma bruta de todas as compras historicas.
+
+    Formula: quantidade_atual x preco_medio x (cotacao_usd_brl se USD)
+    """
+    from app.infrastructure.db.models import PosicaoAtualAtivo, Ativo
+
+    pos = db.scalar(
+        select(PosicaoAtualAtivo).where(PosicaoAtualAtivo.ativo_id == ativo_id)
+    )
+    if not pos or float(pos.quantidade) <= 0:
+        return 0.0
+
+    ativo = db.get(Ativo, ativo_id)
+    quantidade = float(pos.quantidade)
+    preco_medio = _preco_medio_efetivo(pos)  # ja considera PM manual se houver
+
+    # Custo na moeda nativa
+    custo_nativo = quantidade * preco_medio
+
+    # Converte para BRL se for ativo em USD
+    if ativo and ativo.moeda == "USD":
+        cotacao = float(pos.cotacao_usd_brl) if pos.cotacao_usd_brl else None
+        if not cotacao:
+            # Fallback: tenta pegar a cotacao mais recente disponivel
+            from app.services.conversao_bcb import obter_cotacao_por_data
+            from datetime import date
+            cotacao = obter_cotacao_por_data(db, date.today()) or 5.0
+        custo_brl = custo_nativo * cotacao
+    else:
+        custo_brl = custo_nativo
+
+    return round(custo_brl, 4)
 
 
 def calcular_proventos_totais_brl(db: Session, ativo_id: int) -> float:
