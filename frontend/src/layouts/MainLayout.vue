@@ -710,4 +710,41 @@ const grupos = computed(() => [
     grid-template-columns: 240px 1fr;
   }
 }
+
+/* 🍎 iOS Safe Area - respeita notch/relogio */
+.topbar {
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(68px + env(safe-area-inset-top, 0px));
+}
+
+.sidebar {
+  padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
+}
+
+/* Menu como overlay no mobile */
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 250ms ease;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .app-shell:not(.menu-colapsado) .sidebar {
+    transform: translateX(0);
+  }
+
+  .content {
+    padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  }
+}
 </style>
